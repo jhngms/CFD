@@ -1,0 +1,271 @@
+\documentclass[11pt]{article}
+
+% --- Essential Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb, geometry, listings, xcolor}
+\usepackage{standalone}
+\usepackage{docmute} 
+\usepackage{pdfpages}
+% 2. Essential Jupyter Dependencies (Add these to avoid errors)
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{color}
+\usepackage{hyperref}
+\usepackage{fvextra} % Required for code wrapping
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+\usepackage{import} % Helps with file paths for images
+\geometry{margin=1in}
+\setlength{\parskip}{0.8em}
+\setlength{\parindent}{1.5em}
+\usepackage{graphicx}        
+\usepackage{booktabs}     
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}      
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+\usepackage{xurl}
+
+% Define custom colors for code aesthetics
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    frame=single % Adds a professional box around the code
+}
+
+\lstset{style=mystyle}
+
+
+\title{Project 1: Analytical vs. Numerical Solutions of a PDE}
+\author{John Gomes}
+\date{February 2026}
+
+\begin{document}
+\maketitle
+
+\section*{Introduction}
+
+The goal of this project is to study the differences between the analytical and numerical solution of the following partial differential equation. This exercise will help in understanding discretization methods and their accuracy and stability.
+
+\begin{equation}
+\frac{\partial u}{\partial x} - 2\frac{\partial^2 u}{\partial y^2} = 2
+\tag{1}
+\end{equation}
+
+Where the boundary conditions are:
+
+\begin{equation}
+u(x,0) = 0, \quad u(x,1) = 0
+\tag{1.1}
+\end{equation}
+
+And the initial condition is:
+
+\begin{equation}
+u(0,y) = 0
+\tag{1.2}
+\end{equation}
+
+\section*{Numerical Method Description}
+
+To solve this PDE, it must first be decoupled. First, looking at the spatial derivative, $\frac{\partial^2 u}{\partial y^2}$, a central finite difference scheme for any given node, $i$, can be used.
+
+\begin{equation}
+\left.\frac{\partial^2 u}{\partial y^2}\right|_i
+\approx
+\frac{u_{i+1} + u_{i-1} - 2u_i}{\Delta y^2}
+\tag{2}
+\end{equation}
+
+The Crank-Nicolson scheme was used to discretize the solution in the x-direction. This implicit method averages derivative of $\frac{\partial u}{\partial x}$ between the $j$th and $j$th + 1 steps for a given node, $i$. The following equation is a general solution to a 1-D parabolic PDE, like equation 1, in the discretized form. For our application, $a = 2$, $S = 2$.
+
+\begin{equation}
+\frac{u_i^{j+1} - u_i^j}{\Delta x}
+- a \frac{1}{2\Delta y^2}
+\left[
+(u_{i+1}^{j+1} + u_{i-1}^{j+1} - 2u_i^{j+1})
++
+(u_{i+1}^{j} + u_{i-1}^{j} - 2u_i^{j})
+\right] = S
+\tag{3}
+\end{equation}
+
+Rewriting this equation by factoring $r = \frac{a\Delta x}{2\Delta y^2} = \frac{\Delta x}{\Delta y^2}$ gives the following.
+
+\begin{equation}
+u_i^{j+1} - u_i^j =
+\frac{\Delta x}{\Delta y^2}
+\left[
+(u_{i+1}^{j+1} + u_{i-1}^{j+1} - 2u_i^{j+1})
++
+(u_{i+1}^{j} + u_{i-1}^{j} - 2u_i^{j})
+\right] + 2\Delta x
+\tag{4}
+\end{equation}
+
+The discretized solution can then be solved using Lower-Upper (LU) decomposition. The Crank-Nicolson solution shown above is implicit, meaning the solution of the future step is dependent on the current solution step.
+
+\begin{equation}
+Au = b
+\tag{5}
+\end{equation}
+
+See below for definitions of $A$ and $b$. Here, $A$ contains the unknown values in a tridiagonal matrix. This shows the effect of the central node, as well as the nodes to the left and right. It is important to note that boundary nodes will be explicitly defined and are not included in this matrix.
+
+\begin{equation}
+A =
+\begin{bmatrix}
+1 + 2r & -r & 0 & \dots & 0 \\
+-r & 1 + 2r & -r & \dots & 0 \\
+0 & -r & 1 + 2r & \dots & 0 \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+0 & 0 & 0 & -r & 1 + 2r
+\end{bmatrix}
+\tag{6}
+\end{equation}
+
+\begin{equation}
+b_i = r(u_{i-1}^j + u_{i+1}^j) + (1 - 2r)u_i^j + 2\Delta x
+\tag{7}
+\end{equation}
+
+\section*{Derivation of Analytical Solution}
+
+To validate the numerical solution, we must compare it to the analytical solution of the governing equation. The y boundary conditions are homogenous, so the solution can be expanded as follows. This will satisfy the boundary conditions in equation 1.1.
+
+\begin{equation}
+u(x,y) = \sum_{n=1}^{\infty} a_n(x)\sin(n\pi y)
+\tag{8}
+\end{equation}
+
+Then, the respective derivatives of this must be computed.
+
+\begin{equation}
+\frac{\partial u}{\partial x}
+=
+\sum_{n=1}^{\infty} a_n'(x)\sin(n\pi y)
+\tag{9}
+\end{equation}
+
+\begin{equation}
+\frac{\partial^2 u}{\partial y^2}
+=
+\sum_{n=1}^{\infty} -(n\pi)^2 a_n(x)\sin(n\pi y)
+\tag{10}
+\end{equation}
+
+The source term also must be written in a similar format. It can be expressed as a sine function from the interval (0,1).
+
+\begin{equation}
+2 = \sum_{n=1}^{\infty} b_n \sin(n\pi y)
+\tag{11}
+\end{equation}
+
+Integrating this over the interval (0,1) with respect to y gives the following. Note that for any even $n$, the equation for $b_n$ equals zero.
+
+\begin{equation}
+b_n = 2\int_0^1 2 \sin(n\pi y)\,dy
+\tag{12}
+\end{equation}
+
+\begin{equation}
+b_n = \frac{4}{n\pi}(1 - (-1)^n) = \frac{8}{n\pi}, \quad n = 1,3,5,\dots
+\tag{13}
+\end{equation}
+
+Rewriting the original PDE in expanded sine representation gives the following.
+
+\begin{equation}
+a_n'(x) + 2(n\pi)^2 a_n(x) = b_n
+\tag{15}
+\end{equation}
+
+Using an integrating factor:
+
+\begin{equation}
+a_n(x) = \frac{b_n}{2(n\pi)^2}\left(1 - e^{-2(n\pi)^2 x}\right)
+\tag{18}
+\end{equation}
+
+Substituting in the solution for $b_n$ in equation 13, we get the final analytical solution of the PDE.
+
+\begin{equation}
+u(x,y) =
+\sum_{n=1,3,5,\dots}^{\infty}
+\frac{4}{(n\pi)^3}
+(1 - e^{-2(n\pi)^2 x})
+\sin(n\pi y)
+\tag{19}
+\end{equation}
+
+Note that as $x$ approaches infinity, the exponential term will disappear. Therefore, the steady state solution is simplified to the following.
+
+\begin{equation}
+u(x,y) =
+\sum_{n=1,3,5,\dots}^{\infty}
+\frac{4}{(n\pi)^3}
+\sin(n\pi y)
+=
+\frac{1}{2}(y - y^2)
+\tag{20}
+\end{equation}
+\newpage
+\section*{Results \& Discussion}
+
+\subsection*{Accuracy}
+
+With the Python code shown in the Appendix, we can compare the profile of this parabolic PDE at different x locations for both analytical and numerical solutions.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.64\textwidth]{../figures/fig1.png}
+\caption{Crank-Nicolson Validation}
+\end{figure}
+When looking at this problem, it is easiest to think of $x$ as a time-like variable. Here, we can see that as $x$ gets larger, it eventually converges onto the same path.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.64\textwidth]{../figures/zoomfig1.png}
+\caption{Crank-Nicolson Validation (Zoomed)}
+\end{figure}
+The steady state solution described in equation 20 is shown by the black dotted line. By $x = 0.3$, the system has nearly reached the steady state solution, though a difference is still noticeable. At $x = 0.8$, the solution is indistinguishable from the steady state solution. Through an iterative process, the numerical solution becomes indistinguishable at $x \approx 0.4$. The agreement between the steady state analytical and numerical solutions gives validity to the C-N scheme.
+
+These results also indicate that the Crank-Nicolson scheme can trace analytical solutions with high fidelity, even in transient solutions (for example, $x = 0.06$). This is a second-order method, $O(\Delta x^2, \Delta y^2)$, which ensures errors are small with proper step sizes.
+
+\subsection*{Stability}
+
+The Crank-Nicolson scheme is an implicit scheme; therefore, it is unconditionally stable. This implies that for any value of $r = \Delta x / \Delta y^2$, the Crank–Nicolson solution will remain bounded and will not diverge. For an explicit scheme, $r < 0.5$ otherwise it will become unstable and diverge. Though, unconditional stability does not necessarily mean that the solution will be accurate.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.64\textwidth]{../figures/fig2.png}
+\caption{Crank-Nicolson Numerical Inaccuracy (Larger Step Size)}
+\end{figure}
+
+This shows that accuracy and stability are fundamentally independent. When using a much larger timestep, the C-N solutions begin to deviate from the analytical solutions. This is particularly noticeable for smaller values of x, where there is rapid change every iteration. This makes sense as C-N is a second-order accurate method.
+Notably, as the solution approaches steady state, this error lessens. This is because the system is well defined with the source term and boundary conditions. The system is driven to the steady state solution from equation 20.
+
+\includepdf[pages=-]{Appendix.pdf}
+\end{document}
