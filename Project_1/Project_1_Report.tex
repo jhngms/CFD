@@ -241,14 +241,14 @@ u(x,y) =
 With the Python code shown in the Appendix, we can compare the profile of this parabolic PDE at different x locations for both analytical and numerical solutions.
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.64\textwidth]{../figures/fig1.png}
+\includegraphics[width=0.64\textwidth]{figures/fig1.png}
 \caption{Crank-Nicolson Validation}
 \end{figure}
 When looking at this problem, it is easiest to think of $x$ as a time-like variable. Here, we can see that as $x$ gets larger, it eventually converges onto the same path.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.64\textwidth]{../figures/zoomfig1.png}
+\includegraphics[width=0.64\textwidth]{figures/zoomfig1.png}
 \caption{Crank-Nicolson Validation (Zoomed)}
 \end{figure}
 The steady state solution described in equation 20 is shown by the black dotted line. By $x = 0.3$, the system has nearly reached the steady state solution, though a difference is still noticeable. At $x = 0.8$, the solution is indistinguishable from the steady state solution. Through an iterative process, the numerical solution becomes indistinguishable at $x \approx 0.4$. The agreement between the steady state analytical and numerical solutions gives validity to the C-N scheme.
@@ -260,7 +260,7 @@ These results also indicate that the Crank-Nicolson scheme can trace analytical 
 The Crank-Nicolson scheme is an implicit scheme; therefore, it is unconditionally stable. This implies that for any value of $r = \Delta x / \Delta y^2$, the Crank–Nicolson solution will remain bounded and will not diverge. For an explicit scheme, $r < 0.5$ otherwise it will become unstable and diverge. Though, unconditional stability does not necessarily mean that the solution will be accurate.
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.64\textwidth]{../figures/fig2.png}
+\includegraphics[width=0.64\textwidth]{figures/fig2.png}
 \caption{Crank-Nicolson Numerical Inaccuracy (Larger Step Size)}
 \end{figure}
 
